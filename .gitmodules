@@ -1,0 +1,3 @@
+[submodule "models/Pytorch_Retinaface"]
+	path = models/Pytorch_Retinaface
+	url = https://github.com/biubug6/Pytorch_Retinaface
