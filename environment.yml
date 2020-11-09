@@ -1,0 +1,12 @@
+name: ai
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.8
+  - scipy
+  - numpy
+  - click
+  - tqdm
+  - pip:
+    - ImageHash
