@@ -8,11 +8,11 @@ import torch
 import torch.backends.cudnn as cudnn
 
 # noinspection DuplicatedCode
-from data import cfg_mnet, cfg_re50
-from layers.functions.prior_box import PriorBox
-from models.retinaface import RetinaFace
-from utils.box_utils import decode, decode_landm
-from utils.nms.py_cpu_nms import py_cpu_nms
+from retina_data import cfg_mnet, cfg_re50
+from retina_layers.functions.prior_box import PriorBox
+from retina_models.retinaface import RetinaFace
+from retina_utils.box_utils import decode, decode_landm
+from retina_utils.nms.py_cpu_nms import py_cpu_nms
 
 
 class FaceDetector:

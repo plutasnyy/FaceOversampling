@@ -16,7 +16,7 @@ def main(path):
     filtered_images_paths = filter(lambda x: x.stem not in hashes, images_paths)
     for i, path in enumerate(filtered_images_paths):
         path.unlink(missing_ok=True)
-        
+
     print(f'Done, removed {i + 1} images.')
 
 
