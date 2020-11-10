@@ -11,20 +11,8 @@ from scipy.io import loadmat
 from skimage.transform import SimilarityTransform
 from tqdm.contrib import tenumerate
 
+from preprocessing.calculate_landmarks_from_directory import CALCULATED_COORDS
 from preprocessing.face_detector import FaceDetector
-
-pd.set_option('display.max_rows', 500)
-pd.set_option('display.max_columns', 500)
-pd.set_option('display.width', 1000)
-
-# calculate_landmarks_from_directory.py for 256 x 256
-CALCULATED_COORDS = np.array([
-    96.12349935, 119.87868143,
-    159.29785576, 119.96951135,
-    128.37833404, 157.49470474,
-    99.63297665, 186.05553152,
-    156.01534961, 186.22217416
-])
 
 
 def calc_age(taken, dob):
