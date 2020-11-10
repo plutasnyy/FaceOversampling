@@ -8,5 +8,6 @@ dependencies:
   - numpy
   - click
   - tqdm
+  - pandas
   - pip:
     - ImageHash
