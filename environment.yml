@@ -9,6 +9,7 @@ dependencies:
   - click
   - tqdm
   - pandas
+  - pytorch-lightning
   - pip:
     - ImageHash
     - ninja
