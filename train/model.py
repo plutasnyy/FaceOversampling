@@ -2,6 +2,7 @@ import pytorch_lightning as pl
 from torch import nn
 from torch.nn.functional import mse_loss
 from torch.optim import Adam
+from torch.optim.lr_scheduler import StepLR
 from torchvision import models
 
 
@@ -11,6 +12,7 @@ class MobileNetLightingModel(pl.LightningModule):
         super().__init__(*args, **kwargs)
         self.mobilenet = models.mobilenet_v2(pretrained=True)
         self.mobilenet.classifier[1] = nn.Linear(1280, 1)
+        # https://github.com/shamangary/SSR-Net/blob/master/training_and_testing/TYY_model.py#L42
 
     def forward(self, x):
         return self.mobilenet(x)
@@ -30,4 +32,5 @@ class MobileNetLightingModel(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = Adam(self.parameters())
-        return optimizer
+        scheduler = StepLR(optimizer, step_size=30, gamma=0.1)
+        return [optimizer], [scheduler]
