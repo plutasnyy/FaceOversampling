@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Optional
 
 import pytorch_lightning as pl
+from PIL import Image
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 from skimage import io
@@ -10,7 +11,7 @@ import pandas as pd
 
 
 class FaceDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir: str, batch_size=64):
+    def __init__(self, data_dir: str, batch_size=2):
         super().__init__()
         self.data_dir: Path = Path(data_dir)
         self.batch_size = batch_size
@@ -37,15 +38,16 @@ class FaceDataModule(pl.LightningDataModule):
 class FaceImagesDataset(Dataset):
     def __init__(self, csv_file: Path, transform=None):
         self.data = pd.read_csv(str(csv_file))
+        self.data = self.data.head(100)
         self.transform = transform
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
-        img_name = Path(self.data.iloc[idx, 'aligned_path'])
-        age = Path(self.data.iloc[idx, 'age'])
-        image = io.imread(img_name)
+        img_name = Path(self.data.iloc[idx]['aligned_path'])
+        age = int(self.data.iloc[idx]['age'])
+        image = Image.open(img_name)
 
         if self.transform:
             image = self.transform(image)
