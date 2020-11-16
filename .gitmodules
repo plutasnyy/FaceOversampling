@@ -1,0 +1,6 @@
+[submodule "models/Pytorch_Retinaface"]
+	path = models/Pytorch_Retinaface
+	url = https://github.com/plutasnyy/Pytorch_Retinaface.git
+[submodule "models/pixel2style2pixel"]
+	path = models/pixel2style2pixel
+	url = https://github.com/plutasnyy/pixel2style2pixel.git

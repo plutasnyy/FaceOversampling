@@ -7,20 +7,20 @@ import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 
-from data import cfg_mnet, cfg_re50
-from layers import PriorBox
-from models import RetinaFace
-from utils import decode, decode_landm
-from utils.nms.py_cpu_nms import py_cpu_nms
-
-
 # noinspection DuplicatedCode
+from retina_data import cfg_mnet, cfg_re50
+from retina_layers.functions.prior_box import PriorBox
+from retina_models.retinaface import RetinaFace
+from retina_utils.box_utils import decode, decode_landm
+from retina_utils.nms.py_cpu_nms import py_cpu_nms
+
+
 class FaceDetector:
-    def __init__(self, weights='models/retina_face/Resnet50_Final.pth', network='resnet50'):
+    def __init__(self, weights='models/retina_face/Resnet50_Final.pth', network='resnet50', keep_top_k=1):
         torch.set_grad_enabled(False)
         self.top_k = 5000
         self.nms_threshold = 0.4
-        self.keep_top_k = 750
+        self.keep_top_k = keep_top_k
         self.cfg = None
 
         if network == "mobile0.25":
