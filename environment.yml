@@ -10,6 +10,7 @@ dependencies:
   - tqdm
   - pandas
   - pytorch-lightning
+  - torchsummary
   - pip:
     - ImageHash
     - ninja

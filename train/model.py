@@ -11,7 +11,12 @@ class MobileNetLightingModel(pl.LightningModule):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.mobilenet = models.mobilenet_v2(pretrained=True)
-        self.mobilenet.classifier[1] = nn.Linear(1280, 1)
+        self.mobilenet.classifier = nn.Sequential(
+            nn.Linear(1280, 32),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(32, 1),
+        )
         # https://github.com/shamangary/SSR-Net/blob/master/training_and_testing/TYY_model.py#L42
 
     def forward(self, x):
