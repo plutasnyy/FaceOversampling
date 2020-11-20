@@ -3,3 +3,4 @@
 checkpoints
 comet-ml/*
 *.zip
+*config*

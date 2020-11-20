@@ -1,11 +1,16 @@
+from configparser import ConfigParser
 from pathlib import Path
 
+from easydict import EasyDict
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor, EarlyStopping
 from pytorch_lightning.loggers import CometLogger
 
 from dataset import FaceDataModule
 from model import MobileNetLightingModel
+
+config = ConfigParser(dict_type=EasyDict)
+config.read('config.ini')
 
 LOGGING_PARAMS = {'comet_ml_logging': True, 'description': ''}
 LEARNING_PARAMS = {'epochs': 90, 'data_path': 'data/imdb-wiki/wiki_crop_aligned', 'batch_size': 32,
@@ -14,7 +19,8 @@ ALL_PARAMS = {**LOGGING_PARAMS, **LEARNING_PARAMS}
 
 logger, callbacks = False, list()
 if LOGGING_PARAMS['comet_ml_logging']:
-    logger = CometLogger(api_key="2ma9DWG8F7ul8RsBQTcXy3pCz", project_name="pbp", workspace="plutasnyy")
+    logger = CometLogger(api_key=config.cometml.apikey, project_name=config.cometml.projectname,
+                         workspace=config.cometml.workspace)
     logger.experiment.set_code(filename='train/train.py', overwrite=True)
     logger.log_hyperparams(ALL_PARAMS)
     callbacks.append(LearningRateMonitor(logging_interval='epoch'))

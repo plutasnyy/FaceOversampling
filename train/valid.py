@@ -1,8 +1,11 @@
+from configparser import ConfigParser
+
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import torch
 from comet_ml import APIExperiment
+from easydict import EasyDict
 from sklearn.metrics import mean_absolute_error
 from sklearn.utils import compute_sample_weight, compute_class_weight
 from tqdm import tqdm
@@ -14,7 +17,10 @@ experiment_id = '3220f193c2d0449ab6fc17317def1ed3'
 model_name = 'epoch=26-val_mae=5.89.ckpt'
 dataset_path = 'data/utk-face/utk_face_aligned'
 
-experiment = APIExperiment(api_key="2ma9DWG8F7ul8RsBQTcXy3pCz", previous_experiment=experiment_id)
+config = ConfigParser(dict_type=EasyDict)
+config.read('config.ini')
+
+experiment = APIExperiment(api_key=config.cometml.apikey, previous_experiment=experiment_id)
 experiment.download_model(name=model_name, output_path='comet-ml/', expand=True)
 
 data_module = FaceDataModule(dataset_path, batch_size=32)
