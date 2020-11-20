@@ -8,7 +8,8 @@ from dataset import FaceDataModule
 from model import MobileNetLightingModel
 
 LOGGING_PARAMS = {'comet_ml_logging': True, 'description': ''}
-LEARNING_PARAMS = {'epochs': 90, 'data_path': 'data/imdb-wiki/wiki_crop_aligned', 'batch_size': 64}
+LEARNING_PARAMS = {'epochs': 90, 'data_path': 'data/imdb-wiki/wiki_crop_aligned', 'batch_size': 32,
+                   'weighted_samples': True}
 ALL_PARAMS = {**LOGGING_PARAMS, **LEARNING_PARAMS}
 
 logger, callbacks = False, list()
@@ -18,7 +19,7 @@ if LOGGING_PARAMS['comet_ml_logging']:
     logger.log_hyperparams(ALL_PARAMS)
     callbacks.append(LearningRateMonitor(logging_interval='epoch'))
 
-model_checkpoint = ModelCheckpoint(filepath='checkpoints/{epoch:02d}-{val_mae:.2f}', save_weights_only=True,
+model_checkpoint = ModelCheckpoint(filepath='checkpoints/{epoch:02d}-{val_mae:.4f}', save_weights_only=True,
                                    save_top_k=3, monitor='val_mae', period=1)
 early_stop_callback = EarlyStopping(monitor='val_mae', min_delta=0.01, patience=10, verbose=True, mode='min')
 callbacks.extend([model_checkpoint, early_stop_callback])
