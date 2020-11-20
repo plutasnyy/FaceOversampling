@@ -4,18 +4,20 @@ import albumentations as A
 import cv2
 import pandas as pd
 import pytorch_lightning as pl
+import torch
 from albumentations.pytorch import ToTensorV2
-from torch.utils.data import DataLoader, Dataset
+from sklearn.utils import compute_sample_weight
+from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 
 
 class FaceDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir: str, batch_size=2):
+    def __init__(self, data_dir: str, batch_size=2, weighted_samples=False):
         super().__init__()
         self.data_dir: Path = Path(data_dir)
         self.batch_size = batch_size
+        self.weighted_samples = weighted_samples
 
         self.preprocess_train = A.Compose([
-            A.RandomCrop(150,150),
             A.Resize(224, 224),
             A.Rotate(limit=20, p=0.25),
             A.OpticalDistortion(p=0.25),
@@ -23,16 +25,20 @@ class FaceDataModule(pl.LightningDataModule):
             A.ChannelShuffle(p=0.5),
             ToTensorV2()
         ])
+
         self.preprocess_valid = A.Compose([
-            A.CenterCrop(150,150),
             A.Resize(224, 224),
             A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ToTensorV2()
         ])
 
     def train_dataloader(self):
-        return DataLoader(FaceImagesDataset(self.data_dir / 'train.csv', transform=self.preprocess_train),
-                          batch_size=self.batch_size)
+        dataset = FaceImagesDataset(self.data_dir / 'train.csv', transform=self.preprocess_train)
+        sampler = None
+        if self.weighted_samples:
+            samples_weight = compute_sample_weight('balanced', dataset.target)
+            sampler = WeightedRandomSampler(samples_weight, len(samples_weight))
+        return DataLoader(dataset, batch_size=self.batch_size, sampler=sampler)
 
     def val_dataloader(self):
         return DataLoader(FaceImagesDataset(self.data_dir / 'val.csv', transform=self.preprocess_valid),
@@ -61,3 +67,7 @@ class FaceImagesDataset(Dataset):
             image = self.transform(image=image)['image']
 
         return image, age
+
+    @property
+    def target(self):
+        return self.data['age'].to_numpy()

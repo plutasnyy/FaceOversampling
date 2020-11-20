@@ -1,3 +1,6 @@
 *__pycache__*
 .idea
 checkpoints
+comet-ml/*
+*.zip
+*config*
