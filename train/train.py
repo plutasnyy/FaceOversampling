@@ -26,10 +26,12 @@ def set_seed(seed):
 @click.option('-ds', '--dataset', type=click.Choice(['imdb', 'utk']), required=True)
 @click.option('--logger/--no-logger', default=True)
 @click.option('-e', '--epochs', default=90, type=int)
+@click.option('--seed', default=0, type=int)
 @click.option('-bs', '--batch-size', default=32, type=int)
 @click.option('--weighted-samples', is_flag=True)
 def train(**params):
     params = EasyDict(params)
+    set_seed(params.seed)
 
     dataset_paths = {
         'imdb': 'data/imdb-wiki/wiki_crop_aligned',
