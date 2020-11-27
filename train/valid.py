@@ -1,5 +1,6 @@
 from configparser import ConfigParser
 
+import click
 from comet_ml import APIExperiment
 from easydict import EasyDict
 
@@ -7,17 +8,30 @@ from dataset import FaceDataModule
 from model import MobileNetLightingModel
 from utils import log_mae_per_age
 
-experiment_id = 'c30cb22c7a4b4866b2825b79fdf9862f'
-model_name = 'epoch=42-val_mae=7.3106.ckpt'
-dataset_path = 'data/imdb-wiki/wiki_crop_aligned'
 
-config = ConfigParser(dict_type=EasyDict)
-config.read('config.ini')
+@click.command()
+@click.option('--experiment', required=True, type=str, help='For example ce132011516346c99185d139fb23c70c')
+@click.option('--weights-path', required=True, type=str, help='For example epoch=25-val_mae=8.2030.ckpt')
+def validate(experiment, weights_path):
+    config = ConfigParser()
+    config.read('config.ini')
+    comet_config = EasyDict(config['cometml'])
 
-experiment = APIExperiment(api_key=config._sections.cometml.apikey, previous_experiment=experiment_id)
-experiment.download_model(name=model_name, output_path='comet-ml/', expand=True)
+    dataset_paths = {
+        'imdb': 'data/imdb-wiki/wiki_crop_aligned',
+        'utk': 'data/utk_face/utk_face_aligned'
+    }
 
-data_module = FaceDataModule(dataset_path, batch_size=32)
-model = MobileNetLightingModel().load_from_checkpoint('comet-ml/' + model_name)
+    experiment = APIExperiment(api_key=comet_config.apikey, previous_experiment=experiment)
+    dataset = experiment.get_parameters_summary("data_path")['valueCurrent']
 
-log_mae_per_age(model, data_module.val_dataloader, experiment)
+    experiment.download_model(name=weights_path, output_path='comet-ml/', expand=True)
+
+    data_module = FaceDataModule(dataset_paths[dataset], batch_size=32)
+    model = MobileNetLightingModel().load_from_checkpoint('comet-ml/' + weights_path)
+
+    log_mae_per_age(model, data_module.val_dataloader(), experiment)
+
+
+if __name__ == '__main__':
+    validate()
