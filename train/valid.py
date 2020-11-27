@@ -1,64 +1,37 @@
 from configparser import ConfigParser
 
-import numpy as np
-import pandas as pd
-import plotly.express as px
-import torch
+import click
 from comet_ml import APIExperiment
 from easydict import EasyDict
-from sklearn.metrics import mean_absolute_error
-from sklearn.utils import compute_sample_weight, compute_class_weight
-from tqdm import tqdm
 
 from dataset import FaceDataModule
 from model import MobileNetLightingModel
+from utils import log_mae_per_age
 
-experiment_id = '3220f193c2d0449ab6fc17317def1ed3'
-model_name = 'epoch=26-val_mae=5.89.ckpt'
-dataset_path = 'data/utk-face/utk_face_aligned'
 
-config = ConfigParser(dict_type=EasyDict)
-config.read('config.ini')
+@click.command()
+@click.option('--experiment', required=True, type=str, help='For example ce132011516346c99185d139fb23c70c')
+@click.option('--weights-path', required=True, type=str, help='For example epoch=25-val_mae=8.2030.ckpt')
+def validate(experiment, weights_path):
+    config = ConfigParser()
+    config.read('config.ini')
+    comet_config = EasyDict(config['cometml'])
 
-experiment = APIExperiment(api_key=config.cometml.apikey, previous_experiment=experiment_id)
-experiment.download_model(name=model_name, output_path='comet-ml/', expand=True)
+    dataset_paths = {
+        'imdb': 'data/imdb-wiki/wiki_crop_aligned',
+        'utk': 'data/utk-face/utk_face_aligned'
+    }
 
-data_module = FaceDataModule(dataset_path, batch_size=32)
-model = MobileNetLightingModel().load_from_checkpoint('comet-ml/' + model_name)
+    experiment = APIExperiment(api_key=comet_config.apikey, previous_experiment=experiment)
+    dataset = experiment.get_parameters_summary("data_path")['valueCurrent']
 
-y_list, y_pred_list = list(), list()
-for x, y in tqdm(data_module.val_dataloader()):
-    with torch.no_grad():
-        y_pred = model(x)
-    y_list.extend(y.tolist())
-    y_pred_list.extend(y_pred.squeeze().tolist())
+    experiment.download_model(name=weights_path, output_path='comet-ml/', expand=True)
 
-df = pd.DataFrame({
-    'y': y_list,
-    'ae': np.abs(np.array(y_list) - np.array(y_pred_list))
-})
-df = df.groupby(['y']).mean()
+    data_module = FaceDataModule(dataset_paths[dataset], batch_size=32)
+    model = MobileNetLightingModel().load_from_checkpoint('comet-ml/' + weights_path)
 
-fig = px.bar(df, x=df.index, y='ae')
-fig.update_layout(
-    title=f"Absolute Error per Age, Weighted MAE: {df['ae'].mean():.2f}",
-    xaxis_title="Age",
-    yaxis_title="Mean Absolute Error",
-)
-fig.write_image('comet-ml/tmp_img.png')
-experiment.log_image('comet-ml/tmp_img.png', image_name='Absolute Error per Age')
+    log_mae_per_age(model, data_module.val_dataloader(), experiment)
 
-class_weight = compute_class_weight('balanced', np.unique(y_list), y_list)
-fig = px.scatter(class_weight)
-fig.update_layout(
-    title="Class weights",
-    xaxis_title="Age",
-    yaxis_title="Weight",
-)
 
-fig.write_image('comet-ml/tmp_img.png')
-experiment.log_image('comet-ml/tmp_img.png', image_name='Class weights')
-
-sample_weight = compute_sample_weight('balanced', y_list)
-mae = mean_absolute_error(y_list, y_pred_list, sample_weight=sample_weight)
-experiment.log_metrics({'weighted mae': mae})
+if __name__ == '__main__':
+    validate()
