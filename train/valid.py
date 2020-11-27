@@ -19,7 +19,7 @@ def validate(experiment, weights_path):
 
     dataset_paths = {
         'imdb': 'data/imdb-wiki/wiki_crop_aligned',
-        'utk': 'data/utk_face/utk_face_aligned'
+        'utk': 'data/utk-face/utk_face_aligned'
     }
 
     experiment = APIExperiment(api_key=comet_config.apikey, previous_experiment=experiment)

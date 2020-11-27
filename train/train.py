@@ -35,7 +35,7 @@ def train(**params):
 
     dataset_paths = {
         'imdb': 'data/imdb-wiki/wiki_crop_aligned',
-        'utk': 'data/utk_face/utk_face_aligned'
+        'utk': 'data/utk-face/utk_face_aligned'
     }
 
     config = ConfigParser()
