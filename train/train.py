@@ -1,9 +1,7 @@
-import os
 from configparser import ConfigParser
 from pathlib import Path
 
 import click
-import torch
 from easydict import EasyDict
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor, EarlyStopping
@@ -12,14 +10,6 @@ from pytorch_lightning.loggers import CometLogger
 from dataset import FaceDataModule
 from model import MobileNetLightingModel
 from utils import log_mae_per_age
-
-
-def set_seed(seed):
-    seed_everything(seed)
-    os.environ['PYTHONHASHSEED'] = str(seed)
-    torch.set_deterministic(True)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
 
 
 @click.command()
@@ -32,7 +22,7 @@ def set_seed(seed):
 @click.option('--weighted-samples', is_flag=True)
 def train(**params):
     params = EasyDict(params)
-    set_seed(params.seed)
+    seed_everything(params.seed)
 
     dataset_paths = {
         'imdb': 'data/imdb-wiki/wiki_crop_aligned',
@@ -61,7 +51,8 @@ def train(**params):
 
     model = MobileNetLightingModel()
 
-    trainer = Trainer(logger=logger, min_epochs=20, max_epochs=params['epochs'], callbacks=callbacks, gpus=1)
+    trainer = Trainer(logger=logger, min_epochs=0, max_epochs=params['epochs'], callbacks=callbacks, gpus=1,
+                      deterministic=True)
     trainer.fit(model, datamodule=data_module)
 
     if params.logger:
