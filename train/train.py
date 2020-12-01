@@ -15,6 +15,9 @@ from utils import log_mae_per_age
 @click.command()
 @click.option('-n', '--name', required=True, type=str)
 @click.option('-ds', '--dataset', type=click.Choice(['imdb', 'utk']), required=True)
+@click.option('-l', '--loss', type=click.Choice(['mae', 'huber']), default='mae')
+@click.option('-b', '--beta', type=float, default=1.0,
+              help='Threshold used with Huber loss. It is applied only when --loss huber is given')
 @click.option('--logger/--no-logger', default=True)
 @click.option('-e', '--epochs', default=90, type=int)
 @click.option('--seed', default=0, type=int)
@@ -49,9 +52,9 @@ def train(**params):
     data_module = FaceDataModule(data_dir=dataset_paths[params.dataset], batch_size=params.batch_size,
                                  weighted_samples=params.weighted_samples)
 
-    model = MobileNetLightingModel()
+    model = MobileNetLightingModel(loss=params.loss, beta=params.beta)
 
-    trainer = Trainer(logger=logger, min_epochs=0, max_epochs=params['epochs'], callbacks=callbacks, gpus=1,
+    trainer = Trainer(logger=logger, max_epochs=params['epochs'], callbacks=callbacks, gpus=1,
                       deterministic=True)
     trainer.fit(model, datamodule=data_module)
 
