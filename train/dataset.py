@@ -4,7 +4,6 @@ import albumentations as A
 import cv2
 import pandas as pd
 import pytorch_lightning as pl
-import torch
 from albumentations.pytorch import ToTensorV2
 from sklearn.utils import compute_sample_weight
 from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
@@ -38,20 +37,21 @@ class FaceDataModule(pl.LightningDataModule):
         if self.weighted_samples:
             samples_weight = compute_sample_weight('balanced', dataset.target)
             sampler = WeightedRandomSampler(samples_weight, len(samples_weight))
-        return DataLoader(dataset, batch_size=self.batch_size, sampler=sampler)
+        return DataLoader(dataset, batch_size=self.batch_size, sampler=sampler, num_workers=8)
 
     def val_dataloader(self):
         return DataLoader(FaceImagesDataset(self.data_dir / 'val.csv', transform=self.preprocess_valid),
-                          batch_size=self.batch_size)
+                          batch_size=self.batch_size, num_workers=8)
 
     def test_dataloader(self):
         return DataLoader(FaceImagesDataset(self.data_dir / 'test.csv', transform=self.preprocess_valid),
-                          batch_size=self.batch_size)
+                          batch_size=self.batch_size, num_workers=8)
 
 
 class FaceImagesDataset(Dataset):
     def __init__(self, csv_file: Path, transform=None):
         self.data = pd.read_csv(str(csv_file))
+        self.data = self.data.head(200)
         self.transform = transform
 
     def __len__(self):
