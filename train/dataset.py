@@ -51,7 +51,7 @@ class FaceDataModule(pl.LightningDataModule):
 class FaceImagesDataset(Dataset):
     def __init__(self, csv_file: Path, transform=None):
         self.data = pd.read_csv(str(csv_file))
-        self.data = self.data.head(200)
+        self.data=self.data.head(100)
         self.transform = transform
 
     def __len__(self):

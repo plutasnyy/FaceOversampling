@@ -4,13 +4,15 @@ channels:
   - defaults
 dependencies:
   - python=3.8
+  - albumentations=0.5.1
+  - pytorch=1.6.0
+  - pip
   - scipy
   - numpy
   - click
   - tqdm
   - pandas
   - pytorch-lightning
-  - torchsummary
   - pip:
     - ImageHash
     - ninja
