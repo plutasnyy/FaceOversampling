@@ -13,16 +13,19 @@ from utils import log_mae_per_age
 
 
 @click.command()
-@click.option('-n', '--name', required=True, type=str)
+@click.option('-n', '--name', required=True, type=str, help='Name will be visible in CometML')
 @click.option('-ds', '--dataset', type=click.Choice(['imdb', 'utk']), required=True)
-@click.option('-l', '--loss', type=click.Choice(['mae', 'huber']), default='mae')
+@click.option('-l', '--loss', type=click.Choice(['mae', 'huber']), default='mae',
+              help='Loss used during train/val stage, MAE still will be calculated as a metric')
 @click.option('-b', '--beta', type=float, default=1.0,
               help='Threshold used with Huber loss. It is applied only when --loss huber is given')
-@click.option('--logger/--no-logger', default=True)
-@click.option('-e', '--epochs', default=90, type=int)
+@click.option('--logger/--no-logger', default=True, help='Flag used to disable logging the data to CometML')
+@click.option('-e', '--epochs', default=90, type=int, help='Maximum number of epochs')
 @click.option('--seed', default=0, type=int)
+@click.option('--data-cutoff', default=None, type=int,
+              help='Number of data samples used in training and validation, used for local testing the code')
 @click.option('-bs', '--batch-size', default=32, type=int)
-@click.option('--weighted-samples', is_flag=True)
+@click.option('--weighted-samples', is_flag=True, help='It forces equal sampling data in batches based on class')
 def train(**params):
     params = EasyDict(params)
     seed_everything(params.seed)
@@ -50,7 +53,7 @@ def train(**params):
     callbacks.extend([model_checkpoint, early_stop_callback])
 
     data_module = FaceDataModule(data_dir=dataset_paths[params.dataset], batch_size=params.batch_size,
-                                 weighted_samples=params.weighted_samples)
+                                 weighted_samples=params.weighted_samples, cutoff=params.data_cutoff)
 
     model = MobileNetLightingModel(loss=params.loss, beta=params.beta)
 
@@ -62,7 +65,9 @@ def train(**params):
         for absolute_path in model_checkpoint.best_k_models.keys():
             logger.experiment.log_model(Path(absolute_path).name, absolute_path)
         logger.log_metrics({'best_model_score': model_checkpoint.best_model_score.tolist()})
-        log_mae_per_age(model, data_module.val_dataloader(), logger.experiment)
+
+        best_model = MobileNetLightingModel.load_from_checkpoint(model_checkpoint.best_model_path)
+        log_mae_per_age(best_model, data_module.val_dataloader(), logger.experiment)
 
 
 if __name__ == '__main__':

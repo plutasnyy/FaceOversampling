@@ -55,6 +55,7 @@ def log_mae_per_age(model, val_dataloader, experiment):
         title=f"Absolute Error per Age, Weighted MAE: {df['ae'].mean():.2f}",
         xaxis_title="Age",
         yaxis_title="Mean Absolute Error",
+        yaxis=dict(range=[0, 45])
     )
     experiment.log_html(to_html(fig))
 
@@ -63,7 +64,7 @@ def log_mae_per_age(model, val_dataloader, experiment):
     fig.update_layout(
         title="Class weights",
         xaxis_title="Age",
-        yaxis_title="Weight",
+        yaxis_title="Weight"
     )
 
     experiment.log_html(to_html(fig))
