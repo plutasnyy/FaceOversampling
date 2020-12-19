@@ -1,12 +1,9 @@
 # Adapted from scripts/inference.py
-# uruchmialem to z
 # --exp_dir . --checkpoint_path models/pSp_weights/psp_ffhq_encode.pt --data_path oversampling/example_images --latent_mask=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17
 import os
 from argparse import Namespace
 
-import numpy as np
 import torch
-from PIL.Image import fromarray
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
