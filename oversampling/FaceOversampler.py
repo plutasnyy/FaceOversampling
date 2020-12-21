@@ -60,7 +60,7 @@ class FaceOversampler(object):
                                            return_latents=True)
 
         input_cuda = img2.unsqueeze(0).cuda().float()
-        result_batch, latent = self.net(input_cuda, randomize_noise=False, resize=self.resize_outputs,
+        result_batch, latent = self.net(input_cuda, resize=self.resize_outputs,
                                         return_latents=True, latent_mask=self.latent_mask,
                                         inject_latent=latent_to_inject[0].unsqueeze(0), alpha=alpha)
         return result_batch[0]
@@ -84,7 +84,6 @@ class FaceOversampler(object):
                 paths = sample(imgs[i], 2)
                 pics = list()
                 for p in paths:
-                    print(p)
                     image = Image.open(p)
                     pics.append(self.transform(image))
                 alpha = uniform(0, 1)
