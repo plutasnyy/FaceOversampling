@@ -66,7 +66,6 @@ class FaceOversampler(object):
         return result_batch[0]
 
     def fit_transform(self, dataset_path, result_path):
-
         if not os.path.exists(result_path+'/new_imgs'):
             os.mkdir(result_path+'/new_imgs')
 
