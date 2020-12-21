@@ -1,10 +1,17 @@
-import torch
-from psp_models.psp import pSp
-from argparse import Namespace
-from psp_configs import data_configs
-from psp_datasets.inference_dataset import InferenceDataset
-from torch.utils.data import DataLoader
 import os
+from argparse import Namespace
+from collections import defaultdict
+from random import sample, uniform
+import imagehash
+
+import pandas as pd
+import torch
+import torchvision.transforms as transforms
+from PIL import Image
+
+from psp_configs import data_configs
+from psp_models.psp import pSp
+from psp_utils.common import tensor2im
 
 
 class FaceOversampler(object):
@@ -39,16 +46,11 @@ class FaceOversampler(object):
         self.dataloader = None
         self.batch_size = 2
 
-    def fit(self, dataset_path):
-        dataset = InferenceDataset(root=dataset_path,
-                                   transform=self.transforms_dict['transform_inference'],
-                                   opts=self.opts)
+        self.transform = transforms.Compose([
+            transforms.Resize((256, 256)),
+            transforms.ToTensor(),
+            transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])])
 
-        self.dataloader = DataLoader(dataset,
-                                     batch_size=self.batch_size,
-                                     shuffle=False,
-                                     num_workers=int(self.opts.test_workers),
-                                     drop_last=True)
         self.net.eval()
         self.net.cuda()
 
@@ -63,8 +65,35 @@ class FaceOversampler(object):
                                         inject_latent=latent_to_inject[0].unsqueeze(0), alpha=alpha)
         return result_batch[0]
 
-    def transform(self):
-        batch_results = []
-        for input_batch in self.dataloader:
-            batch_results.append(self.interpolate(input_batch[0], input_batch[1], 0.5))
-        return batch_results
+    def fit_transform(self, dataset_path, result_path):
+
+        if not os.path.exists(result_path+'/new_imgs'):
+            os.mkdir(result_path+'/new_imgs')
+
+        df = pd.read_csv(dataset_path)
+        imgs = defaultdict(list)
+
+        for i, g in df.groupby("age"):
+            for idx, im in g.iterrows():
+                imgs[im['age']].append(im['aligned_path'])
+
+        no_samples = len(df) / len(imgs)
+        new_imgs = list()
+
+        for i in imgs.keys():
+            for j in range(int(no_samples - len(imgs[i]))):
+                paths = sample(imgs[i], 2)
+                pics = list()
+                for p in paths:
+                    print(p)
+                    image = Image.open(p)
+                    pics.append(self.transform(image))
+                alpha = uniform(0, 1)
+                new_img = tensor2im(self.interpolate(pics[0], pics[1], alpha))
+                img_hash = str(imagehash.average_hash(new_img))+".jpg"
+                new_img.save(result_path+'/new_imgs/'+img_hash)
+                new_imgs.append({'aligned_path': result_path+'/new_imgs/'+img_hash, 'age': i})
+
+        imgs_df = pd.DataFrame(new_imgs)
+        imgs_df.to_csv(result_path+"/train_new.csv")
+        print("Done")
