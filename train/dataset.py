@@ -45,22 +45,25 @@ class FaceDataModule(pl.LightningDataModule):
         dataset = FaceImagesDataset(df, transform=self.preprocess_train, cutoff=self.cutoff)
 
         sampler = None
+        shuffle = True
         if self.weighted_samples:
             samples_weight = compute_sample_weight('balanced', dataset.target)
             sampler = WeightedRandomSampler(samples_weight, len(samples_weight))
-        return DataLoader(dataset, batch_size=self.batch_size, sampler=sampler, num_workers=8, shuffle=True)
+            shuffle = False
+
+        return DataLoader(dataset, batch_size=self.batch_size, sampler=sampler, num_workers=8, shuffle=shuffle)
 
     def val_dataloader(self):
         csv_file_path = self.data_dir / 'val.csv'
         df = pd.read_csv(str(csv_file_path))
         return DataLoader(FaceImagesDataset(df, transform=self.preprocess_valid, cutoff=self.cutoff),
-                          batch_size=self.batch_size, num_workers=8, shuffle=True)
+                          batch_size=self.batch_size, num_workers=8, shuffle=False)
 
     def test_dataloader(self):
         csv_file_path = self.data_dir / 'test.csv'
         df = pd.read_csv(str(csv_file_path))
         return DataLoader(FaceImagesDataset(df, transform=self.preprocess_valid, cutoff=self.cutoff),
-                          batch_size=self.batch_size, num_workers=8, shuffle=True)
+                          batch_size=self.batch_size, num_workers=8, shuffle=False)
 
 
 class FaceImagesDataset(Dataset):
