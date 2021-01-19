@@ -7,15 +7,15 @@ import pytorch_lightning as pl
 from albumentations.pytorch import ToTensorV2
 from sklearn.utils import compute_sample_weight
 from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
-
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 class FaceDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir: str, batch_size=2, weighted_samples=False, cutoff=None, oversample=False):
+    def __init__(self, data_dir: str, batch_size=2, weighted_samples=False, oversample=False):
         super().__init__()
         self.data_dir: Path = Path(data_dir)
         self.batch_size = batch_size
         self.weighted_samples = weighted_samples
-        self.cutoff = cutoff
         self.oversample = oversample
 
         self.preprocess_train = A.Compose([
@@ -36,13 +36,15 @@ class FaceDataModule(pl.LightningDataModule):
     def train_dataloader(self):
         csv_file_path = self.data_dir / 'train.csv'
         df = pd.read_csv(str(csv_file_path))
-
+        sns.displot(df, x="age", discrete=True)
+        plt.savefig('utk.jpg')
         if self.oversample:
             oversampled_path = self.data_dir.parent / 'oversampled' / 'train.csv'
             df_oversampled = pd.read_csv(str(oversampled_path))
             df_oversampled = df_oversampled.rename(columns={'path': 'aligned_path'})
             df = pd.concat([df, df_oversampled])
-        dataset = FaceImagesDataset(df, transform=self.preprocess_train, cutoff=self.cutoff)
+
+        dataset = FaceImagesDataset(df, transform=self.preprocess_train)
 
         sampler = None
         shuffle = True
@@ -56,23 +58,19 @@ class FaceDataModule(pl.LightningDataModule):
     def val_dataloader(self):
         csv_file_path = self.data_dir / 'val.csv'
         df = pd.read_csv(str(csv_file_path))
-        return DataLoader(FaceImagesDataset(df, transform=self.preprocess_valid, cutoff=self.cutoff),
+        return DataLoader(FaceImagesDataset(df, transform=self.preprocess_valid),
                           batch_size=self.batch_size, num_workers=8, shuffle=False)
 
     def test_dataloader(self):
         csv_file_path = self.data_dir / 'test.csv'
         df = pd.read_csv(str(csv_file_path))
-        return DataLoader(FaceImagesDataset(df, transform=self.preprocess_valid, cutoff=self.cutoff),
+        return DataLoader(FaceImagesDataset(df, transform=self.preprocess_valid),
                           batch_size=self.batch_size, num_workers=8, shuffle=False)
 
 
 class FaceImagesDataset(Dataset):
-    def __init__(self, df, transform=None, cutoff=None):
+    def __init__(self, df, transform=None):
         self.data = df
-
-        if cutoff is not None:  # for local tests of code
-            self.data = self.data.head(cutoff)
-
         self.transform = transform
 
     def __len__(self):

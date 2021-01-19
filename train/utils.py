@@ -58,7 +58,6 @@ def log_mae_per_age(model, val_dataloader, experiment):
         yaxis=dict(range=[0, 45])
     )
     experiment.log_html(to_html(fig))
-
     class_weight = compute_class_weight('balanced', np.unique(y_list), y_list)
     fig = px.scatter(class_weight)
     fig.update_layout(

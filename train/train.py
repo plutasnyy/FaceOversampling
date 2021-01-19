@@ -22,8 +22,6 @@ from utils import log_mae_per_age
 @click.option('--logger/--no-logger', default=True, help='Flag used to disable logging the data to CometML')
 @click.option('-e', '--epochs', default=90, type=int, help='Maximum number of epochs')
 @click.option('--seed', default=0, type=int)
-@click.option('--data-cutoff', default=None, type=int,
-              help='Number of data samples used in training and validation, used for local testing the code')
 @click.option('-bs', '--batch-size', default=32, type=int)
 @click.option('--weighted-samples', is_flag=True, help='It forces equal sampling data in batches based on class')
 @click.option('--oversample', is_flag=True, help='Concatenate oversampled dataset during training')
@@ -54,8 +52,7 @@ def train(**params):
     callbacks.extend([model_checkpoint, early_stop_callback])
 
     data_module = FaceDataModule(data_dir=dataset_paths[params.dataset], batch_size=params.batch_size,
-                                 weighted_samples=params.weighted_samples, cutoff=params.data_cutoff,
-                                 oversample=params.oversample)
+                                 weighted_samples=params.weighted_samples, oversample=params.oversample)
 
     model = MobileNetLightingModel(loss=params.loss, beta=params.beta)
 
