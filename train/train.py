@@ -63,13 +63,13 @@ def train(**params):
                       deterministic=True)
     trainer.fit(model, datamodule=data_module)
 
-    if params.logger:
-        for absolute_path in model_checkpoint.best_k_models.keys():
-            logger.experiment.log_model(Path(absolute_path).name, absolute_path)
-        logger.log_metrics({'best_model_score': model_checkpoint.best_model_score.tolist()})
-
-        best_model = MobileNetLightingModel.load_from_checkpoint(model_checkpoint.best_model_path)
-        log_mae_per_age(best_model, data_module.val_dataloader(), logger.experiment)
+    # if params.logger:
+    #     for absolute_path in model_checkpoint.best_k_models.keys():
+    #         logger.experiment.log_model(Path(absolute_path).name, absolute_path)
+    #     logger.log_metrics({'best_model_score': model_checkpoint.best_model_score.tolist()})
+    #
+    #     best_model = MobileNetLightingModel.load_from_checkpoint(model_checkpoint.best_model_path)
+    #     log_mae_per_age(best_model, data_module.val_dataloader(), logger.experiment)
 
 
 if __name__ == '__main__':
