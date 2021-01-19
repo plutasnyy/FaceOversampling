@@ -16,7 +16,7 @@ from psp_utils.common import tensor2im
 
 
 class FaceOversampler(object):
-    def __init__(self, latent_mask, exp_dir, checkpoint_path, resize_factors=None):
+    def __init__(self, exp_dir, checkpoint_path, resize_factors=None, latent_mask=None, latent_mask_mix=None):
         if resize_factors is not None:
             assert len(
                 resize_factors.split(
@@ -41,8 +41,17 @@ class FaceOversampler(object):
 
         self.net: pSp = pSp(opts)
         self.opts = opts
-        self.latent_mask_interpolate = [i for i in range(18)]
-        self.latent_mask_mix = [i for i in range(8, 18)]
+
+        if latent_mask is None:
+            self.latent_mask_interpolate = [i for i in range(18)]
+        else:
+            self.latent_mask_interpolate = latent_mask
+
+        if latent_mask_mix is None:
+            self.latent_mask_mix = [i for i in range(8, 18)]
+        else:
+            self.latent_mask_mix = latent_mask_mix
+
         self.resize_outputs = False
         self.transforms_dict = data_configs.DATASETS[opts.dataset_type]['transforms'](opts).get_transforms()
         self.dataloader = None
@@ -100,7 +109,7 @@ class FaceOversampler(object):
 
         for i in imgs.keys():
             for j in range(2):
-            # for j in range(int(no_samples - len(imgs[i]))):
+                # for j in range(int(no_samples - len(imgs[i]))):
                 paths = sample(imgs[i], 2)
                 pics = list()
                 for p in paths:
