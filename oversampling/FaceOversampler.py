@@ -41,7 +41,8 @@ class FaceOversampler(object):
 
         self.net: pSp = pSp(opts)
         self.opts = opts
-        self.latent_mask = [int(l) for l in latent_mask.split(",")]
+        self.latent_mask_interpolate = [i for i in range(18)]
+        self.latent_mask_mix = [i for i in range(8, 18)]
         self.resize_outputs = False
         self.transforms_dict = data_configs.DATASETS[opts.dataset_type]['transforms'](opts).get_transforms()
         self.dataloader = None
@@ -62,23 +63,30 @@ class FaceOversampler(object):
 
         input_cuda = img2.unsqueeze(0).cuda().float()
         result_batch, latent = self.net(input_cuda, resize=self.resize_outputs,
-                                        return_latents=True, latent_mask=self.latent_mask,
+                                        return_latents=True, latent_mask=self.latent_mask_interpolate,
                                         inject_latent=latent_to_inject[0].unsqueeze(0), alpha=alpha)
-        return result_batch[0]
+        interpolated_img = tensor2im(result_batch[0]).resize((256, 256))
+        mixed = self.inject_random_face(self.transform(interpolated_img), alpha=uniform(0.75, 1), quantity=1)
+        return mixed[0]
 
     def inject_random_face(self, img, alpha, quantity=1):
         multi_modal_outputs = []
-        for vec_to_inject in range(quantity):
-            cur_vec = torch.from_numpy(np.random.randn(1, 512).astype('float32')).unsqueeze(0).to("cuda")
-            _, latent_to_inject = self.net(cur_vec, input_code=True, return_latents=True)
-            res = self.net(img.unsqueeze(0).cuda().float(), latent_mask=self.latent_mask,
-                           inject_latent=latent_to_inject, alpha=alpha)
-            multi_modal_outputs.append(res[0])
+        torch.cuda.empty_cache()
+
+        with torch.no_grad():
+            for vec_to_inject in range(quantity):
+                cur_vec = torch.from_numpy(np.random.randn(1, 512).astype('float32')).cuda()
+                _, latent_to_inject = self.net(cur_vec, input_code=True, return_latents=True)
+                res = self.net(img.unsqueeze(0).cuda().float(), latent_mask=self.latent_mask_mix,
+                               inject_latent=latent_to_inject, alpha=alpha)
+                multi_modal_outputs.append(tensor2im(res[0]))
+        torch.cuda.empty_cache()
+
         return multi_modal_outputs
 
     def fit_transform(self, dataset_path, result_path):
-        if not os.path.exists(result_path + '/new_imgs'):
-            os.mkdir(result_path + '/new_imgs')
+        if not os.path.exists(result_path + '/images'):
+            os.mkdir(result_path + '/images')
 
         df = pd.read_csv(dataset_path)
         imgs = defaultdict(list)
@@ -91,7 +99,8 @@ class FaceOversampler(object):
         new_imgs = list()
 
         for i in imgs.keys():
-            for j in range(int(no_samples - len(imgs[i]))):
+            for j in range(2):
+            # for j in range(int(no_samples - len(imgs[i]))):
                 paths = sample(imgs[i], 2)
                 pics = list()
                 for p in paths:
@@ -100,8 +109,8 @@ class FaceOversampler(object):
                 alpha = uniform(0, 1)
                 new_img = tensor2im(self.interpolate(pics[0], pics[1], alpha))
                 img_hash = str(imagehash.average_hash(new_img)) + ".jpg"
-                new_img.save(result_path + '/new_imgs/' + img_hash)
-                new_imgs.append({'aligned_path': result_path + '/new_imgs/' + img_hash, 'age': i})
+                new_img.save(result_path + '/images/' + img_hash)
+                new_imgs.append({'aligned_path': '/images/' + img_hash, 'age': i})
 
         imgs_df = pd.DataFrame(new_imgs)
         imgs_df.to_csv(result_path + "/train_new.csv")
