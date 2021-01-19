@@ -39,35 +39,37 @@ def show_batch_of_images(data_module):
 def log_mae_per_age(model, val_dataloader, experiment):
     y_list, y_pred_list = list(), list()
     for x, y in tqdm(val_dataloader):
-        with torch.no_grad():
-            y_pred = model(x)
+        # with torch.no_grad():
+        #     y_pred = model(x)
         y_list.extend(y.tolist())
-        y_pred_list.extend(y_pred.squeeze().tolist())
-
-    df = pd.DataFrame({
-        'y': y_list,
-        'ae': np.abs(np.array(y_list) - np.array(y_pred_list))
-    })
-    df = df.groupby(['y']).mean()
-
-    fig = px.bar(df, x=df.index, y='ae')
-    fig.update_layout(
-        title=f"Absolute Error per Age, Weighted MAE: {df['ae'].mean():.2f}",
-        xaxis_title="Age",
-        yaxis_title="Mean Absolute Error",
-    )
-    experiment.log_html(to_html(fig))
-
+        # y_pred_list.extend(y_pred.squeeze().tolist())
+    #
+    # df = pd.DataFrame({
+    #     'y': y_list,
+    #     'ae': np.abs(np.array(y_list) - np.array(y_pred_list))
+    # })
+    # df = df.groupby(['y']).mean()
+    #
+    # fig = px.bar(df, x=df.index, y='ae')
+    # fig.update_layout(
+    #     title=f"Absolute Error per Age, Weighted MAE: {df['ae'].mean():.2f}",
+    #     xaxis_title="Age",
+    #     yaxis_title="Mean Absolute Error",
+    #     yaxis=dict(range=[0, 45])
+    # )
+    # experiment.log_html(to_html(fig))
+    count = Counter(y_list)
+    lista = []
     class_weight = compute_class_weight('balanced', np.unique(y_list), y_list)
     fig = px.scatter(class_weight)
     fig.update_layout(
         title="Class weights",
         xaxis_title="Age",
-        yaxis_title="Weight",
+        yaxis_title="Weight"
     )
 
     experiment.log_html(to_html(fig))
-
-    sample_weight = compute_sample_weight('balanced', y_list)
-    mae = mean_absolute_error(y_list, y_pred_list, sample_weight=sample_weight)
-    experiment.log_metrics({'weighted mae': mae})
+    #
+    # sample_weight = compute_sample_weight('balanced', y_list)
+    # mae = mean_absolute_error(y_list, y_pred_list, sample_weight=sample_weight)
+    # experiment.log_metrics({'weighted mae': mae})
