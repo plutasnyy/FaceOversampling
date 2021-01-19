@@ -1,3 +1,4 @@
+from collections import Counter
 from pathlib import Path
 
 import albumentations as A
@@ -9,6 +10,7 @@ from sklearn.utils import compute_sample_weight
 from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 import seaborn as sns
 import matplotlib.pyplot as plt
+
 
 class FaceDataModule(pl.LightningDataModule):
     def __init__(self, data_dir: str, batch_size=2, weighted_samples=False, oversample=False):
@@ -36,24 +38,24 @@ class FaceDataModule(pl.LightningDataModule):
     def train_dataloader(self):
         csv_file_path = self.data_dir / 'train.csv'
         df = pd.read_csv(str(csv_file_path))
+
+        if self.oversample:
+            oversampled_path = self.data_dir.parent / 'oversampled_2' / 'train.csv'
+            df_oversampled = pd.read_csv(str(oversampled_path))
+            df_oversampled['aligned_path'] = str(self.data_dir.parent / 'oversampled_2') + df_oversampled['aligned_path']
+            df = pd.concat([df, df_oversampled])
+            df = self.df_undersampling(df)
+
         sns.displot(df, x="age", discrete=True)
         plt.savefig('utk.jpg')
-        if self.oversample:
-            oversampled_path = self.data_dir.parent / 'oversampled' / 'train.csv'
-            df_oversampled = pd.read_csv(str(oversampled_path))
-            df_oversampled = df_oversampled.rename(columns={'path': 'aligned_path'})
-            df = pd.concat([df, df_oversampled])
-
         dataset = FaceImagesDataset(df, transform=self.preprocess_train)
 
         sampler = None
-        shuffle = True
         if self.weighted_samples:
             samples_weight = compute_sample_weight('balanced', dataset.target)
             sampler = WeightedRandomSampler(samples_weight, len(samples_weight))
-            shuffle = False
 
-        return DataLoader(dataset, batch_size=self.batch_size, sampler=sampler, num_workers=8, shuffle=shuffle)
+        return DataLoader(dataset, batch_size=self.batch_size, sampler=sampler, num_workers=8, shuffle=True)
 
     def val_dataloader(self):
         csv_file_path = self.data_dir / 'val.csv'
@@ -66,6 +68,15 @@ class FaceDataModule(pl.LightningDataModule):
         df = pd.read_csv(str(csv_file_path))
         return DataLoader(FaceImagesDataset(df, transform=self.preprocess_valid),
                           batch_size=self.batch_size, num_workers=8, shuffle=False)
+
+    def df_undersampling(self, df):
+        df['age'] = df['age'].astype(int)
+        min_quantity = Counter(df['age']).most_common()[-1][1]
+        result_df = pd.DataFrame([])
+        for i in df['age'].unique():
+            result_df = pd.concat([result_df, df[df['age'] == i].sample(min_quantity)])
+        result_df = result_df.sample(frac=1).reset_index(drop=True)
+        return result_df
 
 
 class FaceImagesDataset(Dataset):

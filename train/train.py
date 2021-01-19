@@ -23,8 +23,9 @@ from utils import log_mae_per_age
 @click.option('-e', '--epochs', default=90, type=int, help='Maximum number of epochs')
 @click.option('--seed', default=0, type=int)
 @click.option('-bs', '--batch-size', default=32, type=int)
-@click.option('--weighted-samples', is_flag=True, help='It forces equal sampling data in batches based on class')
-@click.option('--oversample', is_flag=True, help='Concatenate oversampled dataset during training')
+@click.option('--weighted-samples', is_flag=True, default=False, help='It forces equal sampling data in batches based on class')
+@click.option('--oversample', is_flag=True, default=False, help='Concatenate oversampled dataset during training')
+@click.option('-fdr', is_flag=True, default=False, help='Concatenate oversampled dataset during training')
 def train(**params):
     params = EasyDict(params)
     seed_everything(params.seed)
@@ -57,7 +58,7 @@ def train(**params):
     model = MobileNetLightingModel(loss=params.loss, beta=params.beta)
 
     trainer = Trainer(logger=logger, max_epochs=params['epochs'], callbacks=callbacks, gpus=1,
-                      deterministic=True)
+                      deterministic=True, fast_dev_run=params.fdr)
     trainer.fit(model, datamodule=data_module)
 
     if params.logger:

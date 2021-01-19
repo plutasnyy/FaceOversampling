@@ -126,5 +126,5 @@ class FaceOversampler(object):
                 new_imgs.append({'aligned_path': '/images/' + img_hash, 'age': i, 'base_path':str(paths[0])})
 
         imgs_df = pd.DataFrame(new_imgs)
-        imgs_df.to_csv(result_path + "/train_new.csv")
+        imgs_df.to_csv(result_path + "/train.csv")
         print("Done")
