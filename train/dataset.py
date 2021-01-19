@@ -10,12 +10,13 @@ from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 
 
 class FaceDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir: str, batch_size=2, weighted_samples=False, cutoff=None):
+    def __init__(self, data_dir: str, batch_size=2, weighted_samples=False, cutoff=None, oversample=False):
         super().__init__()
         self.data_dir: Path = Path(data_dir)
         self.batch_size = batch_size
         self.weighted_samples = weighted_samples
         self.cutoff = cutoff
+        self.oversample = oversample
 
         self.preprocess_train = A.Compose([
             A.Resize(224, 224),
@@ -33,27 +34,41 @@ class FaceDataModule(pl.LightningDataModule):
         ])
 
     def train_dataloader(self):
-        dataset = FaceImagesDataset(self.data_dir / 'train.csv', transform=self.preprocess_train, cutoff=self.cutoff)
+        csv_file_path = self.data_dir / 'train.csv'
+        df = pd.read_csv(str(csv_file_path))
+
+        if self.oversample:
+            oversampled_path = self.data_dir.parent / 'oversampled' / 'train.csv'
+            df_oversampled = pd.read_csv(str(oversampled_path))
+            df_oversampled = df_oversampled.rename(columns={'path': 'aligned_path'})
+            df = pd.concat([df, df_oversampled])
+        dataset = FaceImagesDataset(df, transform=self.preprocess_train, cutoff=self.cutoff)
+
         sampler = None
+        shuffle = True
         if self.weighted_samples:
             samples_weight = compute_sample_weight('balanced', dataset.target)
             sampler = WeightedRandomSampler(samples_weight, len(samples_weight))
-        return DataLoader(dataset, batch_size=self.batch_size, sampler=sampler, num_workers=8)
+            shuffle = False
+
+        return DataLoader(dataset, batch_size=self.batch_size, sampler=sampler, num_workers=8, shuffle=shuffle)
 
     def val_dataloader(self):
-        return DataLoader(
-            FaceImagesDataset(self.data_dir / 'val.csv', transform=self.preprocess_valid, cutoff=self.cutoff),
-            batch_size=self.batch_size, num_workers=8)
+        csv_file_path = self.data_dir / 'val.csv'
+        df = pd.read_csv(str(csv_file_path))
+        return DataLoader(FaceImagesDataset(df, transform=self.preprocess_valid, cutoff=self.cutoff),
+                          batch_size=self.batch_size, num_workers=8, shuffle=False)
 
     def test_dataloader(self):
-        return DataLoader(
-            FaceImagesDataset(self.data_dir / 'test.csv', transform=self.preprocess_valid, cutoff=self.cutoff),
-            batch_size=self.batch_size, num_workers=8)
+        csv_file_path = self.data_dir / 'test.csv'
+        df = pd.read_csv(str(csv_file_path))
+        return DataLoader(FaceImagesDataset(df, transform=self.preprocess_valid, cutoff=self.cutoff),
+                          batch_size=self.batch_size, num_workers=8, shuffle=False)
 
 
 class FaceImagesDataset(Dataset):
-    def __init__(self, csv_file: Path, transform=None, cutoff=None):
-        self.data = pd.read_csv(str(csv_file))
+    def __init__(self, df, transform=None, cutoff=None):
+        self.data = df
 
         if cutoff is not None:  # for local tests of code
             self.data = self.data.head(cutoff)
