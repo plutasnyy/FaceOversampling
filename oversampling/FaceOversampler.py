@@ -9,6 +9,7 @@ import pandas as pd
 import torch
 import torchvision.transforms as transforms
 from PIL import Image
+from tqdm import tqdm
 
 from psp_configs import data_configs
 from psp_models.psp import pSp
@@ -48,7 +49,7 @@ class FaceOversampler(object):
             self.latent_mask_interpolate = latent_mask
 
         if latent_mask_mix is None:
-            self.latent_mask_mix = [i for i in range(8, 18)]
+            self.latent_mask_mix = [i for i in range(10, 18)]
         else:
             self.latent_mask_mix = latent_mask_mix
 
@@ -75,7 +76,7 @@ class FaceOversampler(object):
                                         return_latents=True, latent_mask=self.latent_mask_interpolate,
                                         inject_latent=latent_to_inject[0].unsqueeze(0), alpha=alpha)
         interpolated_img = tensor2im(result_batch[0]).resize((256, 256))
-        mixed = self.inject_random_face(self.transform(interpolated_img), alpha=uniform(0.75, 1), quantity=1)
+        mixed = self.inject_random_face(self.transform(interpolated_img), alpha=uniform(0.5, 0.8), quantity=1)
         return mixed[0]
 
     def inject_random_face(self, img, alpha, quantity=1):
@@ -104,22 +105,25 @@ class FaceOversampler(object):
             for idx, im in g.iterrows():
                 imgs[im['age']].append(im['aligned_path'])
 
-        no_samples = len(df) / len(imgs)
+        # no_samples = len(df) / len(imgs)
+        no_samples = 80
+
         new_imgs = list()
 
-        for i in imgs.keys():
-            for j in range(2):
-                # for j in range(int(no_samples - len(imgs[i]))):
+        for i in tqdm(imgs.keys(), total=len(imgs)):
+            # for j in range(2):
+            for j in range(int(no_samples - len(imgs[i]))):
                 paths = sample(imgs[i], 2)
                 pics = list()
                 for p in paths:
                     image = Image.open(p)
                     pics.append(self.transform(image))
                 alpha = uniform(0, 1)
-                new_img = tensor2im(self.interpolate(pics[0], pics[1], alpha))
+                new_img = self.interpolate(pics[0], pics[1], alpha)
+
                 img_hash = str(imagehash.average_hash(new_img)) + ".jpg"
                 new_img.save(result_path + '/images/' + img_hash)
-                new_imgs.append({'aligned_path': '/images/' + img_hash, 'age': i})
+                new_imgs.append({'aligned_path': '/images/' + img_hash, 'age': i, 'base_path':str(paths[0])})
 
         imgs_df = pd.DataFrame(new_imgs)
         imgs_df.to_csv(result_path + "/train_new.csv")
