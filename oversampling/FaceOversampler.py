@@ -2,8 +2,9 @@ import os
 from argparse import Namespace
 from collections import defaultdict
 from random import sample, uniform
-import imagehash
 
+import imagehash
+import numpy as np
 import pandas as pd
 import torch
 import torchvision.transforms as transforms
@@ -65,9 +66,19 @@ class FaceOversampler(object):
                                         inject_latent=latent_to_inject[0].unsqueeze(0), alpha=alpha)
         return result_batch[0]
 
+    def inject_random_face(self, img, alpha, quantity=1):
+        multi_modal_outputs = []
+        for vec_to_inject in range(quantity):
+            cur_vec = torch.from_numpy(np.random.randn(1, 512).astype('float32')).unsqueeze(0).to("cuda")
+            _, latent_to_inject = self.net(cur_vec, input_code=True, return_latents=True)
+            res = self.net(img.unsqueeze(0).cuda().float(), latent_mask=self.latent_mask,
+                           inject_latent=latent_to_inject, alpha=alpha)
+            multi_modal_outputs.append(res[0])
+        return multi_modal_outputs
+
     def fit_transform(self, dataset_path, result_path):
-        if not os.path.exists(result_path+'/new_imgs'):
-            os.mkdir(result_path+'/new_imgs')
+        if not os.path.exists(result_path + '/new_imgs'):
+            os.mkdir(result_path + '/new_imgs')
 
         df = pd.read_csv(dataset_path)
         imgs = defaultdict(list)
@@ -88,10 +99,10 @@ class FaceOversampler(object):
                     pics.append(self.transform(image))
                 alpha = uniform(0, 1)
                 new_img = tensor2im(self.interpolate(pics[0], pics[1], alpha))
-                img_hash = str(imagehash.average_hash(new_img))+".jpg"
-                new_img.save(result_path+'/new_imgs/'+img_hash)
-                new_imgs.append({'aligned_path': result_path+'/new_imgs/'+img_hash, 'age': i})
+                img_hash = str(imagehash.average_hash(new_img)) + ".jpg"
+                new_img.save(result_path + '/new_imgs/' + img_hash)
+                new_imgs.append({'aligned_path': result_path + '/new_imgs/' + img_hash, 'age': i})
 
         imgs_df = pd.DataFrame(new_imgs)
-        imgs_df.to_csv(result_path+"/train_new.csv")
+        imgs_df.to_csv(result_path + "/train_new.csv")
         print("Done")
