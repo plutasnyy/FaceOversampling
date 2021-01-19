@@ -67,22 +67,17 @@ def run():
 
     if opts.n_images is None:
         opts.n_images = len(dataset)
-
+    latent_mask = [int(l) for l in opts.latent_mask.split(",")]
     for input_batch in tqdm(dataloader):
         with torch.no_grad():
-            # input_cuda = input_batch.float()
-            input_cuda = input_batch.cuda().float()
-            result_batch, latent = net(input_cuda, randomize_noise=False, resize=opts.resize_outputs,
-                                       return_latents=True)
+            _, latent_to_inject = net(input_batch.cuda().float(),
+                                      return_latents=True)
 
-    print(latent.shape)
-    latent_mask = [int(l) for l in opts.latent_mask.split(",")]
-    with torch.no_grad():
-        res = net(latent[0], input_code=True, randomize_noise=False, resize=opts.resize_outputs, alpha=0.5,
-                  inject_latent=latent[1], latent_mask=latent_mask)
-
-    result = tensor2im(res[0])
-    fromarray(np.array(result)).save('.')
+    input_cuda = input_batch[0].unsqueeze(0).cuda().float()
+    result_batch, latent = net(input_cuda, randomize_noise=False, resize=opts.resize_outputs,
+                               return_latents=True, latent_mask=latent_mask,
+                               inject_latent=latent_to_inject[1].unsqueeze(0), alpha=0.5)
+    tensor2im(result_batch[0]).save('org.jpg')
 
 
 if __name__ == '__main__':
