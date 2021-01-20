@@ -8,8 +8,6 @@ import pytorch_lightning as pl
 from albumentations.pytorch import ToTensorV2
 from sklearn.utils import compute_sample_weight
 from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
-import seaborn as sns
-import matplotlib.pyplot as plt
 
 
 class FaceDataModule(pl.LightningDataModule):
