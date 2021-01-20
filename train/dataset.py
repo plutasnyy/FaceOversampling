@@ -41,7 +41,8 @@ class FaceDataModule(pl.LightningDataModule):
         if self.oversample:
             oversampled_path = self.data_dir.parent / self.oversample / 'train.csv'
             df_oversampled = pd.read_csv(str(oversampled_path))
-            df_oversampled['aligned_path'] = str(self.data_dir.parent / self.oversample) + df_oversampled['aligned_path']
+            df_oversampled['aligned_path'] = str(self.data_dir.parent / self.oversample) + df_oversampled[
+                'aligned_path']
             df = pd.concat([df, df_oversampled])
 
         if self.underasample:
@@ -50,11 +51,14 @@ class FaceDataModule(pl.LightningDataModule):
         dataset = FaceImagesDataset(df, transform=self.preprocess_train)
 
         sampler = None
+        shuffle = True  # sampler option is mutually exclusive with shuffle
+
         if self.weighted_samples:
             samples_weight = compute_sample_weight('balanced', dataset.target)
             sampler = WeightedRandomSampler(samples_weight, len(samples_weight))
+            shuffle = False
 
-        return DataLoader(dataset, batch_size=self.batch_size, sampler=sampler, num_workers=8, shuffle=True)
+        return DataLoader(dataset, batch_size=self.batch_size, sampler=sampler, num_workers=8, shuffle=shuffle)
 
     def val_dataloader(self):
         csv_file_path = self.data_dir / 'val.csv'
