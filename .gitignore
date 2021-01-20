@@ -8,3 +8,4 @@ data/ffhq/
 data/imdb-wiki/oversampled*
 data/utk-face/oversampled*
 models/pSp_weights/
+config.ini
