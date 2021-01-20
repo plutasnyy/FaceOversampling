@@ -105,13 +105,11 @@ class FaceOversampler(object):
             for idx, im in g.iterrows():
                 imgs[im['age']].append(im['aligned_path'])
 
-        # no_samples = len(df) / len(imgs)
-        no_samples = 80
+        no_samples = len(df) / len(imgs)
 
         new_imgs = list()
 
         for i in tqdm(imgs.keys(), total=len(imgs)):
-            # for j in range(2):
             for j in range(int(no_samples - len(imgs[i]))):
                 paths = sample(imgs[i], 2)
                 pics = list()
