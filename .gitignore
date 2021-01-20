@@ -4,3 +4,7 @@ checkpoints
 comet-ml/*
 *.zip
 *config*
+data/ffhq/
+data/imdb-wiki/oversampled*
+data/utk-face/oversampled*
+models/pSp_weights/

@@ -2,10 +2,10 @@
 
 `config.ini`:
 ```ini
-[comet-ml]
-api_key = mySecretKey
-project_name = myProjectName
-workspace = workspaceName
+[cometml]
+apikey = MySecretKey
+projectname = pbp
+workspace = plutasnyy
 ```
 
 #### Env

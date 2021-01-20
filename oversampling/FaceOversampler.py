@@ -1,6 +1,7 @@
 import os
 from argparse import Namespace
 from collections import defaultdict
+from pathlib import Path
 from random import sample, uniform
 
 import imagehash
@@ -49,7 +50,7 @@ class FaceOversampler(object):
             self.latent_mask_interpolate = latent_mask
 
         if latent_mask_mix is None:
-            self.latent_mask_mix = [i for i in range(10, 18)]
+            self.latent_mask_mix = [i for i in range(9, 18)]
         else:
             self.latent_mask_mix = latent_mask_mix
 
@@ -95,8 +96,7 @@ class FaceOversampler(object):
         return multi_modal_outputs
 
     def fit_transform(self, dataset_path, result_path):
-        if not os.path.exists(result_path + '/images'):
-            os.mkdir(result_path + '/images')
+        Path(result_path + '/images').mkdir(parents=True, exist_ok=True)
 
         df = pd.read_csv(dataset_path)
         imgs = defaultdict(list)
@@ -123,7 +123,7 @@ class FaceOversampler(object):
 
                 img_hash = str(imagehash.average_hash(new_img)) + ".jpg"
                 new_img.save(result_path + '/images/' + img_hash)
-                new_imgs.append({'aligned_path': '/images/' + img_hash, 'age': i, 'base_path':str(paths[0])})
+                new_imgs.append({'aligned_path': '/images/' + img_hash, 'age': i, 'base_path': str(paths[0])})
 
         imgs_df = pd.DataFrame(new_imgs)
         imgs_df.to_csv(result_path + "/train.csv")
