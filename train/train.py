@@ -24,7 +24,8 @@ from utils import log_mae_per_age
 @click.option('--seed', default=0, type=int)
 @click.option('-bs', '--batch-size', default=32, type=int)
 @click.option('--weighted-samples', is_flag=True, default=False, help='It forces equal sampling data in batches based on class')
-@click.option('--oversample', is_flag=True, default=False, help='Concatenate oversampled dataset during training')
+@click.option('--oversample', default=None, type=str, help='Concatenate oversampled dataset during training')
+@click.option('--undersample', is_flag=True, default=False)
 @click.option('-fdr', is_flag=True, default=False, help='Concatenate oversampled dataset during training')
 def train(**params):
     params = EasyDict(params)

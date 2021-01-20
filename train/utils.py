@@ -38,11 +38,13 @@ def show_batch_of_images(data_module):
 
 def log_mae_per_age(model, val_dataloader, experiment):
     y_list, y_pred_list = list(), list()
+    model.eval()
+    model.cuda()
     for x, y in tqdm(val_dataloader):
         with torch.no_grad():
-            y_pred = model(x)
+            y_pred = model(x.cuda())
         y_list.extend(y.tolist())
-        y_pred_list.extend(y_pred.squeeze().tolist())
+        y_pred_list.extend(y_pred.cpu().numpy().squeeze().tolist())
 
     df = pd.DataFrame({
         'y': y_list,

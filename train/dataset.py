@@ -13,12 +13,13 @@ import matplotlib.pyplot as plt
 
 
 class FaceDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir: str, batch_size=2, weighted_samples=False, oversample=False):
+    def __init__(self, data_dir: str, batch_size=2, weighted_samples=False, oversample=None, underasample=False):
         super().__init__()
         self.data_dir: Path = Path(data_dir)
         self.batch_size = batch_size
         self.weighted_samples = weighted_samples
         self.oversample = oversample
+        self.underasample = underasample
 
         self.preprocess_train = A.Compose([
             A.Resize(224, 224),
@@ -40,14 +41,14 @@ class FaceDataModule(pl.LightningDataModule):
         df = pd.read_csv(str(csv_file_path))
 
         if self.oversample:
-            oversampled_path = self.data_dir.parent / 'oversampled_2' / 'train.csv'
+            oversampled_path = self.data_dir.parent / self.oversample / 'train.csv'
             df_oversampled = pd.read_csv(str(oversampled_path))
-            df_oversampled['aligned_path'] = str(self.data_dir.parent / 'oversampled_2') + df_oversampled['aligned_path']
+            df_oversampled['aligned_path'] = str(self.data_dir.parent / self.oversample) + df_oversampled['aligned_path']
             df = pd.concat([df, df_oversampled])
+
+        if self.underasample:
             df = self.df_undersampling(df)
 
-        sns.displot(df, x="age", discrete=True)
-        plt.savefig('utk.jpg')
         dataset = FaceImagesDataset(df, transform=self.preprocess_train)
 
         sampler = None
