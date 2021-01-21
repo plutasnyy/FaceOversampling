@@ -67,18 +67,19 @@ class FaceOversampler(object):
         self.net.eval()
         self.net.cuda()
 
-    def interpolate(self, img1, img2, alpha):
+    def interpolate(self, img1, img2, alpha, peturbate=False):
         with torch.no_grad():
             _, latent_to_inject = self.net(img1.unsqueeze(0).cuda().float(),
                                            return_latents=True)
-
-        input_cuda = img2.unsqueeze(0).cuda().float()
-        result_batch, latent = self.net(input_cuda, resize=self.resize_outputs,
-                                        return_latents=True, latent_mask=self.latent_mask_interpolate,
-                                        inject_latent=latent_to_inject[0].unsqueeze(0), alpha=alpha)
+            input_cuda = img2.unsqueeze(0).cuda().float()
+            result_batch, latent = self.net(input_cuda, resize=self.resize_outputs,
+                                            return_latents=True, latent_mask=self.latent_mask_interpolate,
+                                            inject_latent=latent_to_inject[0].unsqueeze(0), alpha=alpha)
         interpolated_img = tensor2im(result_batch[0]).resize((256, 256))
-        mixed = self.inject_random_face(self.transform(interpolated_img), alpha=uniform(0.5, 0.8), quantity=1)
-        return mixed[0]
+        if peturbate:
+            interpolated_img = self.inject_random_face(self.transform(interpolated_img), alpha=uniform(0.5, 0.8),
+                                                       quantity=1)[0]
+        return interpolated_img
 
     def inject_random_face(self, img, alpha, quantity=1):
         multi_modal_outputs = []
