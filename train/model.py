@@ -72,6 +72,7 @@ class MobileNetLightingModel(pl.LightningModule):
             )
             self.logger.experiment.log_image(name='WMAE', image_data=io.BytesIO(fig.to_image(format='png')),
                                              step=self.trainer.current_epoch)
+            fig.data = []
         self.log('val_wmae_epoch', torch.tensor(grouped_df.mean().values), prog_bar=True, logger=True)
 
     def configure_optimizers(self):
