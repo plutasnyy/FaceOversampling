@@ -18,7 +18,7 @@ os.environ['COMET_DISABLE_AUTO_LOGGING'] = '1'
 @click.command()
 @click.option('-n', '--name', required=True, type=str, help='Name will be visible in CometML')
 @click.option('-ds', '--dataset', type=click.Choice(['imdb', 'utk']), required=True)
-@click.option('-l', '--loss', type=click.Choice(['mae', 'huber']), default='mae',
+@click.option('-l', '--loss', type=click.Choice(['mae', 'huber']), default='huber',
               help='Loss used during train/val stage, MAE still will be calculated as a metric')
 @click.option('-b', '--beta', type=float, default=1.0,
               help='Threshold used with Huber loss. It is applied only when --loss huber is given')
@@ -26,7 +26,7 @@ os.environ['COMET_DISABLE_AUTO_LOGGING'] = '1'
 @click.option('-e', '--epochs', default=90, type=int, help='Maximum number of epochs')
 @click.option('--seed', default=0, type=int)
 @click.option('-bs', '--batch-size', default=32, type=int)
-@click.option('--weighted-samples', is_flag=True, default=False,
+@click.option('--weighted-samples', is_flag=True, default=True,
               help='It forces equal sampling data in batches based on class')
 @click.option('--oversample', default=None, type=str, help='Concatenate oversampled dataset during training')
 @click.option('--undersample', is_flag=True, default=False)
