@@ -58,21 +58,19 @@ class MobileNetLightingModel(pl.LightningModule):
 
     def validation_epoch_end(self, outs):
         age_absolute_error_tuple = [l for o in outs for l in o]
-        print(len(age_absolute_error_tuple))
-        df = pd.DataFrame(age_absolute_error_tuple, columns=['Age', 'Absolute Error']).set_index('Age')
-        grouped_df = df.groupby('Age').agg('mean')
+        grouped_df = pd.DataFrame(age_absolute_error_tuple, columns=['Age', 'Absolute Error']).set_index('Age').groupby(
+            'Age').agg('mean')
 
         if self.comet_logger:
-            fig = px.bar(df, x=df.index, y='Absolute Error')
+            fig = px.bar(grouped_df, x=grouped_df.index, y='Absolute Error')
             fig.update_layout(
-                title=f"Absolute Error per Age, Weighted MAE: {df['Absolute Error'].mean():.2f}",
+                title=f"Absolute Error per Age, Weighted MAE: {grouped_df['Absolute Error'].mean():.2f}",
                 xaxis_title="Age",
                 yaxis_title="Mean Absolute Error",
                 yaxis=dict(range=[0, 45])
             )
             self.logger.experiment.log_image(name='WMAE', image_data=io.BytesIO(fig.to_image(format='png')),
                                              step=self.trainer.current_epoch)
-            fig.data = []
         self.log('val_wmae_epoch', torch.tensor(grouped_df.mean().values), prog_bar=True, logger=True)
 
     def configure_optimizers(self):
