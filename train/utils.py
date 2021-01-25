@@ -1,10 +1,12 @@
+import io
+
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import torch
 from plotly.io import to_html
 from sklearn.metrics import mean_absolute_error
-from sklearn.utils import compute_sample_weight, compute_class_weight
+from sklearn.utils import compute_sample_weight
 from tqdm import tqdm
 
 
@@ -37,14 +39,15 @@ def show_batch_of_images(data_module):
 
 
 def log_mae_per_age(model, val_dataloader, experiment):
-    y_list, y_pred_list = list(), list()
     model.eval()
     model.cuda()
-    for x, y in tqdm(val_dataloader):
-        with torch.no_grad():
+
+    y_list, y_pred_list = list(), list()
+    with torch.no_grad():
+        for x, y in tqdm(val_dataloader):
             y_pred = model(x.cuda())
-        y_list.extend(y.tolist())
-        y_pred_list.extend(y_pred.cpu().numpy().squeeze().tolist())
+            y_list.extend(y.tolist())
+            y_pred_list.extend(y_pred.cpu().numpy().squeeze().tolist())
 
     df = pd.DataFrame({
         'y': y_list,
@@ -60,15 +63,7 @@ def log_mae_per_age(model, val_dataloader, experiment):
         yaxis=dict(range=[0, 45])
     )
     experiment.log_html(to_html(fig))
-    class_weight = compute_class_weight('balanced', np.unique(y_list), y_list)
-    fig = px.scatter(class_weight)
-    fig.update_layout(
-        title="Class weights",
-        xaxis_title="Age",
-        yaxis_title="Weight"
-    )
-
-    experiment.log_html(to_html(fig))
+    experiment.log_image(name='Best WMAE', image_data=io.BytesIO(fig.to_image(format='png')))
 
     sample_weight = compute_sample_weight('balanced', y_list)
     mae = mean_absolute_error(y_list, y_pred_list, sample_weight=sample_weight)
