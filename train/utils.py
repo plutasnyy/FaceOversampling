@@ -67,4 +67,7 @@ def log_mae_per_age(model, val_dataloader, experiment):
 
     sample_weight = compute_sample_weight('balanced', y_list)
     mae = mean_absolute_error(y_list, y_pred_list, sample_weight=sample_weight)
-    experiment.log_metrics({'weighted mae': mae})
+    experiment.log_metrics({'final_wmae': mae})
+
+    mae = mean_absolute_error(y_list, y_pred_list)
+    experiment.log_metrics({'final_mae': mae})
