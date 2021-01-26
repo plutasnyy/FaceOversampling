@@ -28,7 +28,7 @@ class NaiveOversampler(object):
                 paths = sample(imgs[i], 2)
                 alpha = uniform(0.15, 0.85)
                 new_img = Image.blend(Image.open(paths[0]), Image.open(paths[1]), alpha)
-                img_hash = str(imagehash.average_hash(new_img)) + ".jpg"
+                img_hash = str(imagehash.dhash(new_img, hash_size=16)) + ".jpg"
                 new_img.save(result_path + '/images/' + img_hash)
                 new_imgs.append({'aligned_path': '/images/' + img_hash, 'age': i, 'base_path': str(paths[0])})
 
