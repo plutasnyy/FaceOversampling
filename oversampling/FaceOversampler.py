@@ -120,7 +120,7 @@ class FaceOversampler(object):
                 alpha = uniform(0, 1)
                 new_img = self.interpolate(pics[0], pics[1], alpha)
 
-                img_hash = str(imagehash.dhash(new_img, hash_size=16)) + ".jpg"
+                img_hash = str(imagehash.dhash(new_img, hash_size=8)) + ".jpg"
                 new_img.save(result_path + '/images/' + img_hash)
                 new_imgs.append({'aligned_path': '/images/' + img_hash, 'age': i, 'base_path': str(paths[0])})
 
