@@ -26,7 +26,7 @@ os.environ['COMET_DISABLE_AUTO_LOGGING'] = '1'
 @click.option('-e', '--epochs', default=90, type=int, help='Maximum number of epochs')
 @click.option('--seed', default=0, type=int)
 @click.option('-bs', '--batch-size', default=32, type=int)
-@click.option('--weighted-samples', is_flag=True, default=True,
+@click.option('--weighted-samples', is_flag=True, default=False,
               help='It forces equal sampling data in batches based on class')
 @click.option('--oversample', default=None, type=str, help='Concatenate oversampled dataset during training')
 @click.option('--undersample', is_flag=True, default=False)
@@ -52,9 +52,9 @@ def train(**params):
         logger.log_hyperparams(params)
         callbacks.append(LearningRateMonitor(logging_interval='epoch'))
 
-    model_checkpoint = ModelCheckpoint(filepath='checkpoints/{epoch:02d}-{val_wmae_epoch:.4f}', save_weights_only=True,
-                                       save_top_k=3, monitor='val_wmae_epoch', period=1)
-    early_stop_callback = EarlyStopping(monitor='val_wmae_epoch', min_delta=0.01, patience=10, verbose=True, mode='min')
+    model_checkpoint = ModelCheckpoint(filepath='checkpoints/{epoch:02d}-{val_mae:.4f}', save_weights_only=True,
+                                       save_top_k=3, monitor='val_mae', period=1)
+    early_stop_callback = EarlyStopping(monitor='val_mae', min_delta=0.01, patience=10, verbose=True, mode='min')
     callbacks.extend([model_checkpoint, early_stop_callback])
 
     data_module = FaceDataModule(data_dir=dataset_paths[params.dataset], batch_size=params.batch_size,
