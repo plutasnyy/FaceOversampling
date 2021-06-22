@@ -7,7 +7,7 @@ Many authors compare their models’ predictions using metrics such as Mean Abso
 Such metrics are not fit to be used with imbalanced data, as they do not take the size of a given age group into consideration, 
 causing the models to be really good at predicting the age of people between 20 and 40, but failing to correctly predict other age groups. 
 
-![Distribution](docs/distribution.png)
+<img src="./docs/distribution.png" alt="Distribution" width="250"/>
 
 ## Methodology
 We propose to implement an oversampling method, adapting a very well known SMOTE method to process face images.
