@@ -7,7 +7,7 @@ Many authors compare their models’ predictions using metrics such as Mean Abso
 Such metrics are not fit to be used with imbalanced data, as they do not take the size of a given age group into consideration, 
 causing the models to be really good at predicting the age of people between 20 and 40, but failing to correctly predict other age groups. 
 
-<img src="./docs/distribution.png" alt="Distribution" width="550"/>
+<img src="./docs/distribution.png" alt="Distribution" width="450"/>
 
 ## Methodology
 We propose to implement an oversampling method, adapting a very well known SMOTE method to process face images.
@@ -30,10 +30,9 @@ Example of face interpolation (with equal contribution of each face):
 
 ## Evaluation
 To measure  the  quality  of  the  model’s  predictions  by  considering each class equally we used Weighted MAE:
-<img src="./docs/wmae.png" alt="WMAE" width="500"/>
+<img src="./docs/wmae.png" alt="WMAE" width="400"/>
 
-where $`w_i`$ indicated the weight of a sample defined as $`\frac{number\_of\_samples}{number\_of\_age\_groups*group_i\_size}`$
-
+where <img src="https://render.githubusercontent.com/render/math?math=w_i"> indicated the weight of a sample defined as <img src="https://render.githubusercontent.com/render/math?math=\frac{number\_of\_samples}{number\_of\_age\_groups*group_i\_size}">.
 
 ## Results
 | **Model** | **UTK Face** | **IMDB Wiki** |
